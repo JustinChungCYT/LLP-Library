@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import TestGenerator.GraphLoader;
 import TestGenerator.GraphLoader.GraphData;
 
+// TODO: Parallelize checking (parent[v] < parent[w]) and (parent[j] != parent[parent[j]])
+
 // Step 1 execution
 class VmaxCallable implements Callable<String> {
     int id;
@@ -25,7 +27,6 @@ class VmaxCallable implements Callable<String> {
         int maxVmax = atomicVmax.get(id);
         for (int w: neighbors) maxVmax = Math.max(maxVmax, atomicParent.get(w));
         atomicVmax.set(id, maxVmax);
-        // return "v: " + id + ", vmax[" + id + "]: " + atomicVmax.get(id);
         return "";
     }
 }
@@ -168,7 +169,7 @@ public class LlpConComp {
     public static void main(String[] args) {
         GraphData g;
         try {
-            g = GraphLoader.loadGraph("TestGenerator/Tests/ConComp/test1.txt");
+            g = GraphLoader.loadGraph("TestGenerator/Tests/ConComp/test2.txt");
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -176,7 +177,7 @@ public class LlpConComp {
 
         int[][] graph;
         try {
-            graph = GraphLoader.loadUndirectedGraph("TestGenerator/Tests/ConComp/test1.txt");
+            graph = GraphLoader.loadUndirectedGraph("TestGenerator/Tests/ConComp/test2.txt");
         } catch (IOException e) {
             e.printStackTrace();
             return;

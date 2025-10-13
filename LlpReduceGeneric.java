@@ -1,6 +1,7 @@
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.Arrays;
+import java.util.Random;
 
 public class LlpReduceGeneric {
 
@@ -17,6 +18,15 @@ public class LlpReduceGeneric {
     public int identity() { return Integer.MIN_VALUE; }
     public int combine(int a, int b) { return Math.max(a, b); }
   };
+
+  public static int seqReduce(int[] A) {
+    int res = 0;
+    long t1 = System.nanoTime();
+    for (int a: A) res += a;
+    long t2 = System.nanoTime();
+    System.out.println("SeqReduce: " + (t2 - t1) + " ns.");
+    return res;
+  }
 
   public static int parallelReduceLLP(int[] A, IntReducer op, int parallelism) throws InterruptedException {
     final int n = A.length;
@@ -65,8 +75,11 @@ public class LlpReduceGeneric {
       }
     };
 
+    long t1 = System.nanoTime();
     for (int p = 0; p < parallelism; p++) pool.execute(worker);
     done.await();
+    long t2 = System.nanoTime();
+    System.out.println("ParReduce: " + (t2 - t1) + " ns.");
     pool.shutdownNow();
     return G[1];
   }
@@ -74,5 +87,20 @@ public class LlpReduceGeneric {
   private static int nextPow2(int x) {
     // ceil to power of two for x>=1
     return 1 << (32 - Integer.numberOfLeadingZeros(x - 1));
+  }
+
+  public static void main(String[] args) {
+    int arraySize = 10000000;
+    int[] A = new int[arraySize];
+    Random random = new Random(42);
+
+    // Populate the array with random integers
+    for (int i = 0; i < arraySize; i++) A[i] = random.nextInt(100);
+
+    try {
+      int sumPar = LlpReduceGeneric.parallelReduceLLP(A, MAX, Runtime.getRuntime().availableProcessors());
+      int sumSeq = LlpReduceGeneric.seqReduce(A);
+      System.out.println("sumPar: " + sumPar + ", sumSeq: " + sumSeq);
+    } catch (InterruptedException e){}
   }
 }
