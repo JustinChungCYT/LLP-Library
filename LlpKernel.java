@@ -4,6 +4,7 @@ import java.util.function.*;
 import java.util.BitSet;
 
 public abstract class LlpKernel implements AutoCloseable {
+    public final int INF = Integer.MAX_VALUE / 4;
     protected final int n;
     private final ExecutorService pool;
 
@@ -17,8 +18,8 @@ public abstract class LlpKernel implements AutoCloseable {
     // Check if v should be considered in the current iteration
     protected abstract boolean eligible(int v);
 
-    // Check if v is forbidden in the current iteration
-    protected abstract boolean forbidden(int v);
+    // Fobidden conditions 
+    protected abstract IntPredicate forbiddens(int forbIdx);
 
     // Number of ordered advance steps per iteration (>=1).
     protected abstract int numAdvanceSteps();
@@ -39,11 +40,11 @@ public abstract class LlpKernel implements AutoCloseable {
     /* ===== Orchestrator methods (reusable) ===== */
 
     /** Build forbidden set L in parallel; returns true if any were marked. */
-    public final boolean collectForbidden(BitSet L) {
+    public final boolean collectForbidden(int forbIdx, BitSet L) {
         L.clear();
         // Capture method refs (no allocation per v once the lambda object is created)
         IntPredicate elig = this::eligible;
-        IntPredicate forb = this::forbidden;
+        IntPredicate forb = forbiddens(forbIdx);
 
         List<Callable<Void>> tasks = new ArrayList<>(n);
         for (int v = 0; v < n; v++) {
@@ -59,7 +60,7 @@ public abstract class LlpKernel implements AutoCloseable {
     }
 
     /** Run the multi-step advance for the current iteration. */
-    public final void advance(BitSet L) {
+    public void advance(BitSet L) {
         int steps = numAdvanceSteps();
         if (steps <= 0) return;
 

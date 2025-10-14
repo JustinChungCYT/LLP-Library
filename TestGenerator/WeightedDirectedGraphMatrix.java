@@ -22,7 +22,6 @@ public class WeightedDirectedGraphMatrix {
     }
 
     public int getNumVertices() { return numVertices; }
-
     public ArrayList<Integer> getParents(int to) { return parents.get(to); }
 
     public List<Integer> getChildren(int source) {
@@ -48,7 +47,11 @@ public class WeightedDirectedGraphMatrix {
 
     public void printGraph() {
         for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) System.out.print(adjMatrix[i][j] + " ");
+            for (int j = 0; j < numVertices; j++) {
+                int w = adjMatrix[i][j];
+                if (w == INF) System.out.print("* ");
+                else System.out.print(adjMatrix[i][j] + " ");
+            }
             System.out.println();
         }
     }

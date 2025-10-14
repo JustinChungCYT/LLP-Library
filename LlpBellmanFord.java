@@ -1,4 +1,6 @@
 import java.util.*;
+import java.util.function.IntPredicate;
+
 import TestGenerator.*;
 
 public final class LlpBellmanFord extends LlpKernel {
@@ -30,6 +32,15 @@ public final class LlpBellmanFord extends LlpKernel {
         return (int)s;
     }
 
+    private boolean forbidden(int v) {
+        int dv = d[v], best = dv;
+        for (int u : g.getParents(v)) {
+            int cand = safeAdd(d[u], g.getWeight(u, v));
+            if (cand < best) best = cand;
+        }
+        return best < dv;
+    }
+
     @Override
     protected int numAdvanceSteps() { return 1; }
 
@@ -37,13 +48,9 @@ public final class LlpBellmanFord extends LlpKernel {
     protected boolean eligible(int v) { return budget[v] > 0; }
 
     @Override
-    protected boolean forbidden(int v) {
-        int dv = d[v], best = dv;
-        for (int u : g.getParents(v)) {
-            int cand = safeAdd(d[u], g.getWeight(u, v));
-            if (cand < best) best = cand;
-        }
-        return best < dv;
+    protected IntPredicate forbiddens(int forbIdx) {
+        IntPredicate pred = v -> forbidden(v);
+        return pred;
     }
 
     @Override
@@ -66,7 +73,7 @@ public final class LlpBellmanFord extends LlpKernel {
         boolean hasForbidden = true;
         try {
             while (hasForbidden) {
-                hasForbidden = collectForbidden(L);;
+                hasForbidden = collectForbidden(0, L);;
                 if (hasForbidden) advance(L);
             }
         } catch (Exception e) { e.printStackTrace(); }
