@@ -13,6 +13,9 @@ public final class SimpleTests {
             if (exp[i] != act[i]) throw new AssertionError("idx " + i + ": expected " + exp[i] + " got " + act[i]);
         }
     }
+    public static void checkNull(Object obj, String label) {
+        if (obj != null) throw new AssertionError(label + ": expected null");
+    }
 
     public static void main(String[] args) {
         // build a tiny graph and test it, same as above…
