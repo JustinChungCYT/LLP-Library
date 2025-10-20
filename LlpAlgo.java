@@ -13,6 +13,8 @@ public class LlpAlgo {
         try {
             int[] A;
             WeightedDirectedGraphMatrix g;
+            GaleShapleyLoader.MatchingProblem mp;
+            WeightedUndirectedGraph ug;
             switch (algo) {
                 case "Reduce":
                     A = IntArrayFileLoader.load(inputFile);
@@ -29,6 +31,12 @@ public class LlpAlgo {
                 case "FastComp":
                     g = UUGLoader.loadFromFile(inputFile);
                     return fastComp(g);
+                case "GaleShapley":
+                    mp = GaleShapleyLoader.loadFromFile(inputFile);
+                    return galeShapley(mp);
+                case "Boruvka":
+                    ug = BoruvkaGraphLoader.loadFromFile(inputFile);
+                    return boruvka(ug);
                 default:
                     throw new IllegalArgumentException("Unknown algorithm: " + algo);
             }
@@ -69,6 +77,20 @@ public class LlpAlgo {
         int[] result = fc.solve();
         fc.close();
         return result;
+    }
+
+    protected int[] galeShapley(GaleShapleyLoader.MatchingProblem problem) throws Exception {
+        LlpGaleShapley gs = new LlpGaleShapley(problem);
+        int[] matching = gs.solve();
+        gs.close();
+        return matching;
+    }
+
+    protected int[] boruvka(WeightedUndirectedGraph graph) throws Exception {
+        LlpBoruvka boruvka = new LlpBoruvka(graph);
+        int[] components = boruvka.solve();
+        boruvka.close();
+        return components;
     }
 }
 
@@ -112,6 +134,21 @@ class LlpAlgoTest {
         System.out.println("testFastComp ---------- OK");
     }
 
+    private void testGaleShapley() throws Exception {
+        LlpAlgo algo = new LlpAlgo("GaleShapley", testDir + "GaleShapley/test3.txt");
+        int[] res = algo.solve();
+        SimpleTests.checkArrEq(res, new int[]{0, 1});
+        System.out.println("testGaleShapley ---------- OK");
+    }
+
+    private void testBoruvka() throws Exception {
+        LlpAlgo algo = new LlpAlgo("Boruvka", testDir + "Boruvka/test2.txt");
+        int[] res = algo.solve();
+        // Result is component leaders, all vertices should be in same component
+        SimpleTests.check(res[0] == res[1] && res[1] == res[2], "All vertices should be in same component");
+        System.out.println("testBoruvka ---------- OK");
+    }
+
     public static void main(String[] args) throws Exception {
         LlpAlgoTest test = new LlpAlgoTest();
         test.testReduce();
@@ -119,5 +156,7 @@ class LlpAlgoTest {
         test.testBellmanFord();
         test.testJohnson();
         test.testFastComp();
+        test.testGaleShapley();
+        test.testBoruvka();
     }
 }
