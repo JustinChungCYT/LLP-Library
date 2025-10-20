@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WeightedDirectedGraphMatrix {
+    private static final int INF = Integer.MAX_VALUE / 4;
     private int[][] adjMatrix;
     private int numVertices;
     private ArrayList<ArrayList<Integer>> parents;
@@ -16,18 +17,17 @@ public class WeightedDirectedGraphMatrix {
         for (int i = 0; i < numVertices; i++) {
             parents.add(new ArrayList<Integer>());
             for (int j = 0; j < numVertices; j++)
-                adjMatrix[i][j] = Integer.MAX_VALUE;
+                adjMatrix[i][j] = INF;
         }
     }
 
     public int getNumVertices() { return numVertices; }
-
     public ArrayList<Integer> getParents(int to) { return parents.get(to); }
 
     public List<Integer> getChildren(int source) {
         List<Integer> children = new ArrayList<>();
         for (int i = 0; i < numVertices; i++)
-            if (adjMatrix[source][i] < Integer.MAX_VALUE)
+            if (adjMatrix[source][i] < INF)
                 children.add(i);
         return children;
     }
@@ -47,7 +47,11 @@ public class WeightedDirectedGraphMatrix {
 
     public void printGraph() {
         for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) System.out.print(adjMatrix[i][j] + " ");
+            for (int j = 0; j < numVertices; j++) {
+                int w = adjMatrix[i][j];
+                if (w == INF) System.out.print("* ");
+                else System.out.print(adjMatrix[i][j] + " ");
+            }
             System.out.println();
         }
     }
