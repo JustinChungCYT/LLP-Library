@@ -1,7 +1,6 @@
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-import java.util.BitSet;
 
 public abstract class LlpKernel implements AutoCloseable {
     public final int INF = Integer.MAX_VALUE / 4;
@@ -36,6 +35,19 @@ public abstract class LlpKernel implements AutoCloseable {
      * Return null to indicate “use the L provided”.
      */
     protected IntPredicate selectionForStep(int stepIdx) { return null; }
+
+    /* Util methods for Reduce and PrefixSum */
+    protected static int nextPow2(int x) {
+        // ceil to power of two for x>=1
+        return 1 << (32 - Integer.numberOfLeadingZeros(x - 1));
+    }
+
+    protected int[] padToPow2(int[] arr) {
+        int N = nextPow2(arr.length);
+        int[] paddedArr = Arrays.copyOf(arr, N);
+        Arrays.fill(paddedArr, arr.length, N, 0);
+        return paddedArr;
+    }
 
     /* ===== Orchestrator methods (reusable) ===== */
 
