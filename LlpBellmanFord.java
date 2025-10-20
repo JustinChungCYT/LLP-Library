@@ -69,14 +69,14 @@ public final class LlpBellmanFord extends LlpKernel {
     public boolean hasNegativeCycle() { return negCycle; }
     public int[] distances() { return d.clone(); }
 
-    public int[] solve() throws Exception{
+    @Override
+    public int[] solve() throws Exception {
         boolean hasForbidden = true;
-        try {
-            while (hasForbidden) {
-                hasForbidden = collectForbidden(0, L);;
-                if (hasForbidden) advance(L);
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+        
+        while (hasForbidden) {
+            hasForbidden = collectForbidden(0, L);;
+            if (hasForbidden) advance(L);
+        }
 
         return d;
     }

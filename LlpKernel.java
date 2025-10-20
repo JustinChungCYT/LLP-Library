@@ -29,6 +29,8 @@ public abstract class LlpKernel implements AutoCloseable {
      */
     protected abstract void advanceStep(int stepIdx, int v);
 
+    public abstract int[] solve() throws Exception;
+
     /**
      * By default, every step runs over the same set L.
      * Override to use a different selection for a given step (e.g., run pointer-jumping on all vertices).

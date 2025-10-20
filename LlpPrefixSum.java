@@ -1,5 +1,7 @@
 import java.util.*;
 import java.util.function.IntPredicate;
+
+import TestGenerator.IntArrayFileLoader;
 import TestGenerator.SimpleTests;
 
 public class LlpPrefixSum extends LlpKernel {
@@ -83,7 +85,8 @@ public class LlpPrefixSum extends LlpKernel {
         }
     }
 
-    public int[] solve() throws InterruptedException {
+    @Override
+    public int[] solve() throws Exception {
         advance(L);
         int start = 2*n - 1 - A.length;
         int[] G = Arrays.copyOfRange(this.G, start, start + lengthWithoutPadding);
@@ -94,8 +97,10 @@ public class LlpPrefixSum extends LlpKernel {
 
 
 class LlpPrefixSumTest {
+    private final static String testDir = "TestGenerator/Tests/PrefixSum/";
+
   private static void test1() throws Exception {
-    int[] A = new int[]{1, 2, 3, 4, 5, 6, 7, 8};
+    int[] A = IntArrayFileLoader.load(testDir + "test1.txt");
     LlpPrefixSum ps = new LlpPrefixSum(A);
     int[] G = ps.solve();
     ps.close();
@@ -104,7 +109,7 @@ class LlpPrefixSumTest {
   }
 
   private static void test2() throws Exception {
-    int[] A = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    int[] A = IntArrayFileLoader.load(testDir + "test2.txt");
     LlpPrefixSum ps = new LlpPrefixSum(A);
     int[] G = ps.solve();
     ps.close();

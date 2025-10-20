@@ -79,7 +79,8 @@ public class LlpFastComp extends LlpKernel {
         }
     }
 
-    public int[] solve() throws Exception{
+    @Override
+    public int[] solve() throws Exception {
         boolean hasForbidden = true;
 
         while (hasForbidden) {
@@ -93,7 +94,7 @@ public class LlpFastComp extends LlpKernel {
 
 
 class LlpFastCompTest {
-    private static String testDir = "./TestGenerator/Tests/Concomp/";
+    private static String testDir = "./TestGenerator/Tests/FastComp/";
 
     private static void test1() throws Exception {
         WeightedDirectedGraphMatrix graph = UUGLoader.loadFromFile(testDir + "test1.txt");

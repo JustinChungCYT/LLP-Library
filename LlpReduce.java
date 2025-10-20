@@ -1,6 +1,7 @@
 import java.util.*;
 import java.util.function.IntPredicate;
 
+import TestGenerator.IntArrayFileLoader;
 import TestGenerator.SimpleTests;
 
 public class LlpReduce extends LlpKernel {
@@ -54,7 +55,8 @@ public class LlpReduce extends LlpKernel {
     @Override
     protected void advanceStep(int stepIdx, int v){ G[v] = tempG[v]; }
 
-    protected int[] solve() throws InterruptedException {
+    @Override
+    public int[] solve() throws Exception {
         boolean hasForbidden = true;
         while (hasForbidden) {
             hasForbidden = collectForbidden(0, L);
@@ -66,8 +68,10 @@ public class LlpReduce extends LlpKernel {
 
 
 class LlpReduceTest {
+    private final static String testDir = "TestGenerator/Tests/Reduce/";
+
     private static void test1() throws Exception {
-        int[] A = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        int[] A = IntArrayFileLoader.load(testDir + "test1.txt");
         LlpReduce rd = new LlpReduce(A);
         int[] G = rd.solve();
         rd.close();
@@ -76,7 +80,7 @@ class LlpReduceTest {
     }
 
     private static void test2() throws Exception {
-        int[] A = new int[]{1, 2, 3, 4, 5, 6, 7, 8};
+        int[] A = IntArrayFileLoader.load(testDir + "test2.txt");
         LlpReduce rd = new LlpReduce(A);
         int[] G = rd.solve();
         rd.close();

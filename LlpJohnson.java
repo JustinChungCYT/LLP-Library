@@ -49,12 +49,15 @@ public class LlpJohnson extends LlpKernel {
 
     public boolean hasNegativeCycle() { return negCycle; }
 
-    public int[] solve(){
+    @Override
+    public int[] solve() throws Exception {
         boolean hasForbidden = true;
+
         while(hasForbidden){
             hasForbidden = collectForbidden(0, L);
             if (hasForbidden) advance(L);
         }
+
         if (negCycle) return null;
         return price;
     }
