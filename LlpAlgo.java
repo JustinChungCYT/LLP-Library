@@ -13,7 +13,7 @@ public class LlpAlgo {
         try {
             int[] A;
             WeightedDirectedGraphMatrix g;
-            GaleShapleyLoader.MatchingProblem mp;
+            StableMarriageLoader.MatchingProblem mp;
             WeightedUndirectedGraph ug;
             switch (algo) {
                 case "Reduce":
@@ -31,9 +31,9 @@ public class LlpAlgo {
                 case "FastComp":
                     g = UUGLoader.loadFromFile(inputFile);
                     return fastComp(g);
-                case "GaleShapley":
-                    mp = GaleShapleyLoader.loadFromFile(inputFile);
-                    return galeShapley(mp);
+                case "StableMarriage":
+                    mp = StableMarriageLoader.loadFromFile(inputFile);
+                    return stableMarriage(mp);
                 case "Boruvka":
                     ug = BoruvkaGraphLoader.loadFromFile(inputFile);
                     return boruvka(ug);
@@ -94,13 +94,13 @@ public class LlpAlgo {
         return result;
     }
 
-    protected int[] galeShapley(GaleShapleyLoader.MatchingProblem problem) throws Exception {
+    protected int[] stableMarriage(StableMarriageLoader.MatchingProblem problem) throws Exception {
         long startTime = System.nanoTime();
-        LlpGaleShapley gs = new LlpGaleShapley(problem);
-        int[] matching = gs.solve();
-        gs.close();
+        LlpStableMarriage sm = new LlpStableMarriage(problem);
+        int[] matching = sm.solve();
+        sm.close();
         long endTime = System.nanoTime();
-        System.out.println("GaleShapley execution time: " + (endTime - startTime) + " ns");
+        System.out.println("StableMarriage execution time: " + (endTime - startTime) + " ns");
         return matching;
     }
 
@@ -155,11 +155,11 @@ class LlpAlgoTest {
         System.out.println("testFastComp ---------- OK");
     }
 
-    private void testGaleShapley() throws Exception {
-        LlpAlgo algo = new LlpAlgo("GaleShapley", testDir + "GaleShapley/test12.txt");
+    private void testStableMarriage() throws Exception {
+        LlpAlgo algo = new LlpAlgo("StableMarriage", testDir + "StableMarriage/test12.txt");
         int[] res = algo.solve();
         // SimpleTests.checkArrEq(res, new int[]{0, 1});
-        System.out.println("testGaleShapley ---------- OK");
+        System.out.println("testStableMarriage ---------- OK");
     }
 
     private void testBoruvka() throws Exception {
@@ -177,7 +177,7 @@ class LlpAlgoTest {
         test.testBellmanFord();
         test.testJohnson();
         test.testFastComp();
-        test.testGaleShapley();
+        test.testStableMarriage();
         test.testBoruvka();
     }
 }
