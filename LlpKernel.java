@@ -38,6 +38,15 @@ public abstract class LlpKernel implements AutoCloseable {
      */
     protected IntPredicate selectionForStep(int stepIdx) { return null; }
 
+    /* Util methods to measure runtime */
+    public int[] timedSolve() throws Exception {
+        long startTime = System.nanoTime();
+        int[] result = solve();
+        long endTime = System.nanoTime();
+        System.out.println("Execution time: " + (endTime - startTime) + " ns");
+        return result;
+    }
+
     /* Util methods for Reduce and PrefixSum */
     protected static int nextPow2(int x) {
         // ceil to power of two for x>=1
