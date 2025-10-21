@@ -6,9 +6,9 @@ import TestGenerator.*;
 /**
  * LLP-based stable marriage algorithm.
  *
- * This implements Algorithm LLP-StableMarriage1 from the paper.
+ * This implements Algorithm LLP-StableMarriage1.
  *
- * State vector G[i] represents the choice number for man i (1-indexed in the paper, 0-indexed here).
+ * State vector G[i] represents the choice number for man i.
  * G[i] = k means man i is currently proposing to his k-th choice woman.
  *
  * A man j is "forbidden" if there exists another man i such that:
@@ -23,6 +23,8 @@ public final class LlpStableMarriage extends LlpKernel {
     private final int[][] rank;   // rank[j][i] = woman j's ranking of man i (lower is better)
     private final BitSet L;
     private final int[] G;        // G[i] = current choice index for man i
+    private final int[] partner;  // partner[w] = current man proposing to woman w (-1 if none)
+    private int iterationCount = 0;  // Track iterations for critical path analysis
 
     public LlpStableMarriage(StableMarriageLoader.MatchingProblem problem) {
         super(problem.n, problem.n);
@@ -31,9 +33,11 @@ public final class LlpStableMarriage extends LlpKernel {
         this.rank = problem.rank;
         this.G = new int[n];
         this.L = new BitSet(n);
+        this.partner = new int[n];
 
         // Initialize: each man starts with his first choice (index 0)
         Arrays.fill(G, 0);
+        Arrays.fill(partner, -1);  // No woman has a partner initially
     }
 
     /**
@@ -41,31 +45,20 @@ public final class LlpStableMarriage extends LlpKernel {
      * - Both i and j are proposing to the same woman z
      * - Woman z prefers man i to man j (rank[z][i] < rank[z][j])
      *
-     * This implements the condition from the paper:
-     * forbidden: (∃i : ∃k ≤ G[i] : (z = mpref[i][k]) ∧ (rank[z][i] < rank[z][j]))
+     * Optimized O(1) version using partner array.
      */
     private boolean forbidden(int j) {
         if (G[j] >= n) return false; // man j has exhausted all choices
 
         int z = mpref[j][G[j]]; // woman that man j is currently proposing to
 
-        // Check if there's another man i who also proposes to z and is preferred
-        for (int i = 0; i < n; i++) {
-            if (i == j) continue;
-
-            // Check all choices up to and including G[i] for man i
-            for (int k = 0; k <= G[i] && k < n; k++) {
-                if (mpref[i][k] == z) {
-                    // Man i also proposes to woman z
-                    // Check if woman z prefers man i to man j
-                    if (rank[z][i] < rank[z][j]) {
-                        return true; // man j is forbidden
-                    }
-                }
-            }
+        // Check if woman z already has a partner
+        if (partner[z] == -1) {
+            return false; // No one proposes to z yet, j can propose
         }
 
-        return false;
+        // Woman z has a current partner; check if she prefers partner over j
+        return rank[z][partner[z]] < rank[z][j];
     }
 
     @Override
@@ -85,38 +78,41 @@ public final class LlpStableMarriage extends LlpKernel {
 
     @Override
     protected void advanceStep(int stepIdx, int v) {
+        // Before advancing, if this man was proposing to someone, clear that
+        if (G[v] < n) {
+            int oldWoman = mpref[v][G[v]];
+            if (partner[oldWoman] == v) {
+                partner[oldWoman] = -1; // Woman loses this partner
+            }
+        }
+
         // Advance man v to his next choice
         G[v]++;
+
+        // After advancing, if still has choices, update partner
+        if (G[v] < n) {
+            int newWoman = mpref[v][G[v]];
+            int currentPartner = partner[newWoman];
+
+            // Man v proposes to newWoman
+            if (currentPartner == -1 || rank[newWoman][v] < rank[newWoman][currentPartner]) {
+                partner[newWoman] = v; // Woman accepts v
+            }
+        }
     }
 
     /**
-     * Extract the final matching from the G vector.
+     * Extract the final matching using the partner array.
      * Returns an array where result[i] = woman matched to man i.
+     * Optimized O(n) version.
      */
     public int[] getMatching() {
         int[] matching = new int[n];
-        boolean[] womanMatched = new boolean[n];
 
-        // For each man, find which woman he's matched with
-        for (int i = 0; i < n; i++) {
-            if (G[i] < n) {
-                int woman = mpref[i][G[i]];
-
-                // Check if this woman prefers this man among all who proposed to her
-                boolean isMatch = true;
-                for (int j = 0; j < n; j++) {
-                    if (j != i && G[j] < n && mpref[j][G[j]] == woman) {
-                        if (rank[woman][j] < rank[woman][i]) {
-                            isMatch = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (isMatch) {
-                    matching[i] = woman;
-                    womanMatched[woman] = true;
-                }
+        // Use partner array to build matching
+        for (int w = 0; w < n; w++) {
+            if (partner[w] != -1) {
+                matching[partner[w]] = w;
             }
         }
 
@@ -165,8 +161,16 @@ public final class LlpStableMarriage extends LlpKernel {
 
     @Override
     public int[] solve() throws Exception {
-        boolean hasForbidden = true;
+        // Initial proposals: each man proposes to his first choice
+        for (int m = 0; m < n; m++) {
+            int w = mpref[m][0];
+            if (partner[w] == -1 || rank[w][m] < rank[w][partner[w]]) {
+                partner[w] = m;
+            }
+        }
 
+        // Main loop: advance forbidden men
+        boolean hasForbidden = true;
         while (hasForbidden) {
             hasForbidden = collectForbidden(0, L);
             if (hasForbidden) {
@@ -179,27 +183,6 @@ public final class LlpStableMarriage extends LlpKernel {
 }
 
 
-/**
- * Comprehensive test suite for LlpStableMarriage algorithm.
- *
- * Tests cover:
- * - Basic functionality (2x2, 3x3, 4x4 matchings)
- * - Edge cases:
- *   1. Single pair (n=1)
- *   2. Identical preferences (all same)
- *   3. Reverse preferences (complete opposition)
- *   4. Cyclic preferences (circular dependencies)
- *   5. Worst-case scenario (maximally conflicting preferences)
- *   6. Symmetric preferences (man i and woman i have matching prefs)
- *   7. One popular choice (everyone's first choice is the same)
- *   8. Larger instance (n=6)
- *   9. Blocking pair resolution (complex conflict resolution)
- *
- * All tests verify:
- * - Correct matching size
- * - Stability (no blocking pairs)
- * - Perfect matching (each person matched exactly once)
- */
 class LlpStableMarriageTest {
     private static final String testDir = "TestGenerator/Tests/StableMarriage/";
 
